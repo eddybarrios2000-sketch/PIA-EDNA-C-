@@ -42,6 +42,7 @@ main()
 					cout << "ERROR archivo de destinos no existe. Creando, favor de ingresar datos"<<endl;
 					ptr_destinos = fopen("destinos.txt", "w+");
 					registro_destinos(ptr_destinos);
+					fclose(ptr_destinos);
 					
 					if(ptr_destinos == NULL)
 						cout << "ERROR creacion del archivo ha fallado...." << endl;					
@@ -52,6 +53,7 @@ main()
 					{
 						cout << "Archivo de destinos vacio, favor de ingresar datos..."<<endl;
 						registro_destinos(ptr_destinos);
+						fclose(ptr_destinos);
 					}
 					
 				}
@@ -62,6 +64,7 @@ main()
 				{
 					registro_viajes(ptr_viajes, ptr_destinos);
 					fclose(ptr_viajes);
+					fclose(ptr_destinos);
 				}
 				break;
 			case 'b':
@@ -159,7 +162,6 @@ void registro_destinos(FILE*destinostxt)
 	}while(ans != 'n');
 	
 	cout << "saliendo..." << endl;	
-	fclose(destinostxt);
 }
 
 void registro_viajes(FILE*viajestxt, FILE*destinostxt)
@@ -339,7 +341,8 @@ void listado_destinos(FILE*destinostxt)
 
 void listado_vuelos(FILE*vuelostxt, FILE*destinostxt)
 {
-	char descripcion[200], fecha1[20], fecha2[20], fecha[20], nombre_destino[200], clave[20], precio[20];
+	char descripcion[200], fecha1[20], fecha2[20], fecha[20];
+	char clave[20], nombre_destino[200], precio[20];
 	float precio_doble;
 	regex validacion_fecha("(0[1-9]|[1-2]\\d|3[0-1])-(0[1-9]|1[0-2])-(000[1-9]|00[1-9]\\d|0[1-9]\\d{2}|[1-9]\\d{3})");
 	
@@ -353,77 +356,50 @@ void listado_vuelos(FILE*vuelostxt, FILE*destinostxt)
 			cout << "ingrese nuevamente la fecha con el formato establecido" << endl;
 						
 	}while(!regex_match(fecha,validacion_fecha));
-	
-	cout << left
-    << setw(20) << "Clave"
-    << setw(20) << "Destino"
-	<< setw(30) << "Precio"
-    << endl;
 
-    cout << setfill('*') << setw(70) << "" << setfill(' ') << endl;
+	cout << left
+	<< setw(20) << "Clave"
+	<< setw(20) << "Destino"
+	<< setw(30) << "Precio"
+	<< endl;
+
+	cout << setfill('*') << setw(70) << "" << setfill(' ') << endl;
+
 	rewind(vuelostxt);
+
 	while(!feof(vuelostxt))
 	{
-		fecha2[0] = '\0';
-		fscanf(vuelostxt, "%[^|]|%[^|]|%[^|]|\n",descripcion, fecha1, fecha2);
-		
-		if(strcmp(fecha, fecha1)==0)
+		fscanf(vuelostxt, "%[^|]|%[^|]|%[^|]|\n", descripcion, fecha1, fecha2);
+		if(strcmp(fecha, fecha1) == 0 && !feof(vuelostxt))
 		{
 			rewind(destinostxt);
+
 			while(!feof(destinostxt))
 			{
-				fscanf(destinostxt, "%[^|]|%[^|]|%[^|]|\n",clave, nombre_destino, precio);
-				if(strcmp(nombre_destino, descripcion) ==0 && !feof(vuelostxt))
+				fscanf(destinostxt,"%[^|]|%[^|]|%[^|]|\n", clave, nombre_destino, precio);
+				if(strcmp(nombre_destino, descripcion) == 0 && !feof(destinostxt))
 				{
-					if(fecha2[0] == '\0')
+					if(strlen(fecha2) == 0 && !feof(destinostxt))
 					{
 						cout << left
-	                 	<< setw(20) << clave
-	                 	<< setw(20) << nombre_destino
-	                 	<< setw(30) << precio
-	                 	<<endl;
+						<< setw(20) << clave
+						<< setw(20) << nombre_destino
+						<< setw(30) << precio
+						<< endl;
 					}
 					else
 					{
-						precio_doble = atof(precio); 
-						precio_doble = precio_doble*2;
+						precio_doble = atof(precio)*2;
+
 						cout << left
-	                 	<< setw(20) << clave
-	                 	<< setw(20) << nombre_destino
-	                 	<< setw(30) << precio_doble
-	                 	<<endl;
-	                 	
+						<< setw(20) << clave
+						<< setw(20) << nombre_destino
+						<< setw(30) << precio_doble
+						<< endl;
 					}
 				}
-				else
-				{
-					if(fecha2[0] == '\0')
-					{
-						cout << left
-	                 	<< setw(20) << clave
-	                 	<< setw(20) << nombre_destino
-	                 	<< setw(30) << precio
-	                 	<<endl;
-					}
-					else
-					{
-						precio_doble = atof(precio); 
-						precio_doble = precio_doble*2;
-						cout << left
-	                 	<< setw(20) << clave
-	                 	<< setw(20) << nombre_destino
-	                 	<< setw(30) << precio_doble
-	                 	<<endl;
-	                 	
-					}
-				}
-					
 			}
 		}
 	}
-	
-
 }
-
-
 
