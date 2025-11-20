@@ -341,65 +341,89 @@ void listado_destinos(FILE*destinostxt)
 
 void listado_vuelos(FILE*vuelostxt, FILE*destinostxt)
 {
-	char descripcion[200], fecha1[20], fecha2[20], fecha[20];
-	char clave[20], nombre_destino[200], precio[20];
-	float precio_doble;
-	regex validacion_fecha("(0[1-9]|[1-2]\\d|3[0-1])-(0[1-9]|1[0-2])-(000[1-9]|00[1-9]\\d|0[1-9]\\d{2}|[1-9]\\d{3})");
-	
-	do
-	{
-		cout << "ingresa la fecha del viaje a buscar" << endl;
-		cin >> ws;
-		cin.getline(fecha, 20);
-				
-		if(!regex_match(fecha,validacion_fecha))
-			cout << "ingrese nuevamente la fecha con el formato establecido" << endl;
-						
-	}while(!regex_match(fecha,validacion_fecha));
+    char linea[300];
+    char descripcion[200], fecha1[20], fecha2[20], fecha[20];
+    char clave[20], nombre_destino[200], precio[20];
+    float precio_doble;
+    bool encontrado = false;
+    regex validacion_fecha("(0[1-9]|[1-2]\\d|3[0-1])-(0[1-9]|1[0-2])-(000[1-9]|00[1-9]\\d|0[1-9]\\d{2}|[1-9]\\d{3})");
+    
+    do
+    {
+        cout << "ingresa la fecha del viaje a buscar" << endl;
+        cin >> ws;
+        cin.getline(fecha, 20);
+                
+        if(!regex_match(fecha,validacion_fecha))
+            cout << "ingrese nuevamente la fecha con el formato establecido" << endl;
+                        
+    }while(!regex_match(fecha,validacion_fecha));
 
-	cout << left
-	<< setw(20) << "Clave"
-	<< setw(20) << "Destino"
-	<< setw(30) << "Precio"
-	<< endl;
+    cout << left
+    << setw(20) << "Clave"
+    << setw(20) << "Destino"
+    << setw(30) << "Precio"
+    << endl;
 
-	cout << setfill('*') << setw(70) << "" << setfill(' ') << endl;
+    cout << setfill('*') << setw(70) << "" << setfill(' ') << endl;
 
-	rewind(vuelostxt);
+    rewind(vuelostxt);
 
-	while(!feof(vuelostxt))
-	{
-		fscanf(vuelostxt, "%[^|]|%[^|]|%[^|]|\n", descripcion, fecha1, fecha2);
-		if(strcmp(fecha, fecha1) == 0 && !feof(vuelostxt))
-		{
-			rewind(destinostxt);
+    // Leer línea por línea
+    while(fgets(linea, sizeof(linea), vuelostxt) != NULL)
+    {
+        // Limpiar las variables
+        strcpy(fecha2, "");
+        
+        // Intentar leer con 3 campos (viaje redondo)
+        int campos = sscanf(linea, "%[^|]|%[^|]|%[^|]|", descripcion, fecha1, fecha2);
+        
+        // Si no leyó 3 campos, intentar con 2 campos (solo ida)
+        if(campos < 2)
+        {
+            campos = sscanf(linea, "%[^|]|%[^|]|", descripcion, fecha1);
+        }
 
-			while(!feof(destinostxt))
-			{
-				fscanf(destinostxt,"%[^|]|%[^|]|%[^|]|\n", clave, nombre_destino, precio);
-				if(strcmp(nombre_destino, descripcion) == 0 && !feof(destinostxt))
-				{
-					if(strlen(fecha2) == 0 && !feof(destinostxt))
-					{
-						cout << left
-						<< setw(20) << clave
-						<< setw(20) << nombre_destino
-						<< setw(30) << precio
-						<< endl;
-					}
-					else
-					{
-						precio_doble = atof(precio)*2;
-
-						cout << left
-						<< setw(20) << clave
-						<< setw(20) << nombre_destino
-						<< setw(30) << precio_doble
-						<< endl;
-					}
-				}
-			}
-		}
-	}
+        // Verificar si tenemos al menos los 2 campos mínimos y coincide la fecha
+        if(campos >= 2 && strcmp(fecha, fecha1) == 0)
+        {
+            encontrado = true;
+            rewind(destinostxt);
+            
+            // Buscar el destino en el archivo de destinos
+            while(fscanf(destinostxt,"%[^|]|%[^|]|%[^|]|\n", clave, nombre_destino, precio) == 3)
+            {
+                if(strcmp(nombre_destino, descripcion) == 0)
+                {
+                    // Determinar si es viaje redondo (tiene fecha2)
+                    if(strlen(fecha2) > 0 && fecha2[0] != '\n' && fecha2[0] != '\0')
+                    {
+                        precio_doble = atof(precio) * 2;
+                        cout << left
+                        << setw(20) << clave
+                        << setw(20) << nombre_destino
+                        << setw(30) << fixed << setprecision(2) << precio_doble
+                        << " (Redondo)"
+                        << endl;
+                    }
+                    else
+                    {
+                        cout << left
+                        << setw(20) << clave
+                        << setw(20) << nombre_destino
+                        << setw(30) << fixed << setprecision(2) << atof(precio)
+                        << " (Solo ida)"
+                        << endl;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    if(!encontrado)
+    {
+        cout << "No se encontraron vuelos para la fecha: " << fecha << endl;
+    }
 }
 
