@@ -1,3 +1,9 @@
+/*
+Carlos Eduardo Barrios Barrón 
+Oliver Alexander Vega Casas
+Luis Antonio Díaz Chávez
+*/
+
 #include<iostream>
 #include<regex>
 #include<cstring>
